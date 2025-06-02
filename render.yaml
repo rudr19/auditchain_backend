@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: auditchain-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt && python create_model.py
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: PORT
+        value: 8000
