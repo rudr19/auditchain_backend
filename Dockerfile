@@ -28,9 +28,10 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p uploads models
 
-# Expose port (important for Render to detect)
+# Expose port (optional but good practice)
 EXPOSE 8000
 
-# Start the FastAPI app with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the FastAPI app with uvicorn using PORT environment variable
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
 
