@@ -262,3 +262,4 @@ class OCRParser:
         
         # Return the largest amount found (likely the total)
         return max(amounts) if amounts else None
+
