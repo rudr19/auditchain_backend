@@ -302,52 +302,52 @@ class AnomalyDetector:
         
         # Vendor length feature
         if 'vendor' in df_processed.columns:
-            df_processed['vendor_length'] = df_processed['vendor'].str.len().fillna(0)
+            df_processed['vendor_length'] = df_processed['vendor'].astype(str).apply(len)
         else:
-            df_processed['vendor_length'] = 10  # Default length
+            df_processed['vendor_length'] = 0
         
-        # Select only feature columns
-        feature_df = df_processed[self.feature_columns].copy()
+        # Fill missing values with zero
+        df_processed.fillna(0, inplace=True)
         
-        # Handle missing values
-        feature_df = feature_df.fillna(feature_df.mean())
-        
-        return feature_df
+        return df_processed[self.feature_columns]
     
     def _train_isolation_forest(self, df: pd.DataFrame):
-        """Train the Isolation Forest model"""
-        # Initialize scaler
-        self.scaler = StandardScaler()
+        """Train Isolation Forest model"""
+        X = df.values
         
         # Scale features
-        features_scaled = self.scaler.fit_transform(df)
+        self.scaler = StandardScaler()
+        X_scaled = self.scaler.fit_transform(X)
         
         # Train Isolation Forest
         self.model = IsolationForest(
-            contamination=0.1,  # Expect 10% anomalies
+            n_estimators=100,
+            max_samples='auto',
+            contamination=0.05,
             random_state=42,
-            n_estimators=100
+            behaviour='new'
         )
+        self.model.fit(X_scaled)
         
-        self.model.fit(features_scaled)
-        
-        print(f"Model trained with {len(df)} samples")
-    
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the current model"""
-        info = {
-            "model_type": "Isolation Forest",
-            "model_loaded": self.model is not None,
-            "scaler_loaded": self.scaler is not None,
-            "feature_columns": self.feature_columns,
-            "fraud_threshold": self.fraud_threshold
-        }
-        
-        if self.model is not None:
-            info.update({
-                "n_estimators": getattr(self.model, 'n_estimators', 'Unknown'),
-                "contamination": getattr(self.model, 'contamination', 'Unknown'),
-                "model_path": self.model_path
-            })
-        
-        return info
+
+# Usage example
+
+detector = AnomalyDetector()
+
+# Predict fraud for a sample invoice
+sample_invoice = {
+    "amount": 120000,
+    "date": "2024-05-15",
+    "vendor": "ACME Corp"
+}
+
+result = detector.predict_fraud(sample_invoice)
+print(result)
+
+# To train with a new dataset (example):
+# new_data = pd.DataFrame([
+#     {"amount": 100, "date": "2024-01-01", "vendor": "Vendor A"},
+#     {"amount": 100000, "date": "2024-01-02", "vendor": "Vendor B"},
+# ])
+# train_msg = detector.train_model(new_data)
+# print(train_msg)
